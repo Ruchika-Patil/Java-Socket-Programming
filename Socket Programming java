@@ -1,0 +1,136 @@
+/* Write two programs to chat. Each program is playing the role of a client and a server. */
+
+Answer:
+
+
+import java.awt.EventQueue;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.border.EmptyBorder;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.awt.event.ActionEvent;
+import java.awt.Font;
+@SuppressWarnings("serial")
+public class MyClient extends JFrame {
+
+	  private JPanel contentPane;
+	  private JTextField msg_text;
+	  static Socket clientSocket  = null;
+	  static BufferedReader in = null;
+	  static PrintWriter out = null;
+	  static JTextArea msg_area;
+	  static String username = "client";
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				
+				try 
+				{
+					MyClient frame = new MyClient();
+					frame.setVisible(true);
+					
+				} 
+				catch (Exception e) 
+				{
+					e.printStackTrace();
+				}
+				
+			}
+		});
+		
+		try{
+			
+			clientSocket  = new Socket("localhost", 16790);
+			
+			out = new PrintWriter(clientSocket.getOutputStream(), true);   // sending data to server
+			in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));  // receiving data from server 
+			
+			String receiveMessage = "";
+			while(clientSocket.isConnected()){
+				
+				if (in.ready())
+		        {
+					receiveMessage = in.readLine(); // Reading lines from server
+				   if(receiveMessage.isEmpty() == false){
+				   msg_area.setText(msg_area.getText().trim()+"\nServer: "+ receiveMessage);
+				   }
+		        }
+			}
+			
+		}catch(Exception e){
+			msg_area.setText(msg_area.getText().trim()+"\n Errror: "+ e);
+	        System.exit(0);
+		}
+		
+	}
+
+	/**
+	 * Create the frame.
+	 */
+	public MyClient() {
+		setTitle("Client");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setBounds(100, 100, 450, 300);
+		contentPane = new JPanel();
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		setContentPane(contentPane);
+		contentPane.setLayout(null);
+		
+		msg_area = new JTextArea();
+		msg_area.setFont(new Font("Arial", Font.PLAIN, 14));
+		msg_area.setEditable(false);
+		msg_area.setWrapStyleWord(true);
+		msg_area.setLineWrap(true);
+		msg_area.getSelectedTextColor();
+		JScrollPane scrollingArea = new JScrollPane(msg_area);
+		scrollingArea.setBounds(10, 11, 414, 180);
+		msg_area.setText(msg_area.getText().trim()+" Type in the textfield and press Enter!");
+		contentPane.add(scrollingArea);
+		
+		msg_text = new JTextField();
+		msg_text.setFont(new Font("Arial", Font.PLAIN, 14));
+		msg_text.setBounds(10, 202, 414, 49);
+		contentPane.add(msg_text);
+		msg_text.setColumns(10);
+		
+		msg_text.addActionListener(new ActionListener() {
+		    @Override
+		    public void actionPerformed(ActionEvent ae) {
+		         //do stuff here when enter pressed
+		    	String sendMessage = null;
+				sendMessage = msg_text.getText().trim();
+				if(sendMessage.isEmpty() == false){
+				msg_area.setText(msg_area.getText().trim()+"\nClient: "+sendMessage); 
+				out.println(sendMessage);
+				out.flush();
+				msg_text.setText(""); // Set text field blank after sending the message
+					if(sendMessage.equals("bye")){
+						try{
+							in.close();
+				    		out.close();
+				    		clientSocket.close();
+				    		dispose(); // Close the window frame
+				    		
+						}catch(Exception e){
+							msg_area.setText(msg_area.getText().trim()+"\n Errror: "+ e);
+					        System.exit(0);
+							
+						}
+					}
+				
+				}
+		    }
+		});
+	}
+  }
+
